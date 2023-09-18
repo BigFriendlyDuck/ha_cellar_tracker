@@ -7,7 +7,7 @@ import pandas as pd
 import re
 from . import DOMAIN
 
-MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=30)
+MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=3600)
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
     """Set up the sensor platform."""
@@ -61,7 +61,7 @@ class WineCellarSensor(Entity):
     def name(self):
         """Return the name of the sensor."""
         if(self._sub_type):
-            return "cellar_tracker." + self._sensor_type.lower() + "." + self._slug.lower()
+            return "cellar_tracker." + self._sensor_type.lower()# + "." + self._slug.lower()
         else:
             return "cellar_tracker." + self._sensor_type.lower()
 
