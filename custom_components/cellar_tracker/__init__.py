@@ -64,10 +64,6 @@ class WineCellarData:
     def __init__(self, username, password):
         """Init the Canary data object."""
 
-        # self._api = Api(username, password, timeout)
-
-        # self._locations_by_id = {}
-        # self._readings_by_device_id = {}
         self._username = username
         self._password = password
         
@@ -89,26 +85,23 @@ class WineCellarData:
       list = client.get_inventory()
       df = pd.DataFrame(list)
       df[["Price","Valuation"]] = df[["Price","Valuation"]].apply(pd.to_numeric)
-
-      groups = ['Varietal', 'Country', 'Vintage', 'Producer', 'Type']
-
-      for group in groups:
-        group_data = df.groupby(group).agg({'iWine':'count','Valuation':['sum','mean']})
-        group_data.columns = group_data.columns.droplevel(0)
-        group_data["%"] = 1
-        group_data["%"] = (group_data['count']/group_data['count'].sum() ) * 100
-        group_data.columns = ["count", "value_total", "value_avg", "%"]
-        data[group] = {}
-        for row, item in group_data.iterrows():
-          data[group][row] = item.to_dict()
-          data[group][row]["sub_type"] = row
-
-
+      
+      group_data = df.groupby(["iWine"]).agg({'Wine': ['count', 'first'], 'Valuation': ['sum', 'mean'], 'Appellation': 'first','Vintage': 'first', 'Color': 'first', 'BeginConsume':'first','EndConsume':'first'})
+      group_data.columns = ['_'.join(col).strip() if col[1] else col[0] for col in group_data.columns.values]
+      for row_main, item_main in group_data.iterrows():
+          # the name represents the group
+          name = item_main['Wine_first'] + '_' + item_main['Vintage_first']
+          data[name] = {}
+          data[name][row_main] = {"count": item_main['Wine_count'], "value_total": item_main['Valuation_sum'],
+                             "value_avg": item_main['Valuation_mean'], "%": 1}
+          data[name][row_main]["Wine Name"] = item_main['Wine_first']
+          data[name][row_main]["Vintage"] = item_main['Vintage_first']
+          data[name][row_main]["Colour"] = item_main['Color_first']
+          data[name][row_main]["Appellation"] = item_main['Appellation_first']
+          data[name][row_main]["Best after"] = item_main['BeginConsume_first']
+          data[name][row_main]["Best before"] = item_main['EndConsume_first']
 
       data["total_bottles"] = len(df)
       data["total_value"] = df['Valuation'].sum()
       data["average_value"] = df['Valuation'].mean()
       self._data = data
-      
-
-    
